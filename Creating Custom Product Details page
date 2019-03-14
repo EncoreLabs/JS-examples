@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Sample Product Page</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script>
+$.ajax({
+         url: 'https://content-service.tixuk.io/api/v1/products/'your-show-id',
+         type: 'get', //type of the request
+         success: function (data) {
+          $("#name").html(data.response.name); // this method pulls out Show Name
+          $("#synopsis").html(data.response.synopsis); // this method pulls out Show's synopsis
+          $("#venue_name").html(data.response.venue.name); // this method pulls out Venue Name
+          $("#venue_address_city").html(data.response.venue.address.city); // this method pulls out Venue Address City
+          $("#venue_address_postcode").html(data.response.venue.address.postcode); // this method pulls out Venue Address Postcode
+          $("#venue_address_country_name").html(data.response.venue.address.country.name); // this method pulls out Venue Address Country Name
+          }
+        })
+</script>
+</head>
+<body>
+  <h1 id="name"></h1>
+  <img src="https://content-service.tixuk.com/images/products/'your-show-id'/default?width=150p"> 
+  <div id="synopsis"></div> 
+  <div id="venue_name"></div> 
+  <div id="venue_address_city"></div> 
+  <div id="venue_address_postcode"></div> 
+  <div id="venue_address_country_name"></div> 
+ <div  
+        class="inventory__c-quick-search"
+        data-action-url="http://your-website-url/destination-page.html e.g https://ticket.londontheatre.co.uk/booking#/seating-plan"
+        data-affiliate-id="your-affiliate-id e.g. londontheatredd"
+        data-with-calendar="true"
+        data-product-id="your-show-id"
+        data-venue-id="your-venue-id"
+        data-product-type="show"
+        data-api-path="https://inventory-service.devtixuk.io"
+    ></div>
+<script type="text/javascript" src="https://inventory-service.devtixuk.io/js/quicksearch.js"></script>
+</script>
+</body>
+</html>
