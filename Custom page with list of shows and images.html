@@ -1,0 +1,46 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Custom page with list of shows </title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type="text/javascript">
+var array = ['Your-show-Id's']; 
+var result_name = []; // Creating empty array where Show names will be putted
+for(var i =0; i< array.length;i++) 
+{
+ $.ajax({
+         url: ' https://content-service.tixuk.io/api/v1/products/' + array[i], 
+         type: 'get', //type of request
+         success: function (data) {
+            result_name.push(data.response.name); // this method pulls out Show Names from Content API and puts them into result_name Array
+             }
+    , async: false
+    }
+    )
+ 
+}
+var result_img = []; // Creating empty array where url's of Show Images will be putted
+ for(var i =0; i< array.length;i++){
+    var image = "https://content-service.tixuk.com/images/products/" + array[i] + "/default";
+    result_img.push( image );  // // this method pulls out Show Images from Content API and puts them into result_img Array
+};
+</script>
+</head>
+<body>
+<div class="container"></div>
+<script> // This script creates table where Show Names and Show Images would be displayed
+html = '<table>';
+    html+='<tr>';
+    for(i=0;i<result_name.length;i++){
+        if(typeof result_name[i] != 'undefined'){
+            html+='<h4>' + result_name[i] + ' ' + '</h4>' + '<img src='+result_img[i] +'>';
+        }
+    }
+    html+='</td>';
+    html+='</tr>';
+$('.container').html(html);
+</script>
+</body>
+</html>
