@@ -1,0 +1,247 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Calendar Page</title>
+    <meta charset="utf-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="http://malsup.github.io/jquery.blockUI.js"></script>
+</head>
+<body>
+    <div id="heading"></div>
+    <div id="List"></div>
+    <div id="loading"></div>
+    <div id="container"></div>
+    <script>
+        var show = prompt("Please, Enter show id", ); 
+        var number_of_tickets = prompt("Please, Enter number of tickets",);
+        var show_booking_period_from;
+        var show_booking_period_to;
+        var show_name;
+        var content_service_link = 'https://content-service.tixuk.io/api/v1/products/'+show;
+        $.ajax({
+                url: content_service_link,
+                type: 'get',
+                headers: { 'affiliateId': 'londontheatredd' },
+                success: function (data) {
+                        show_booking_period_from = data.response.boOpensDate;
+                        show_booking_period_to = data.response.boClosesDate;
+                        show_name = data.response.name;
+                }
+                , async: false
+            });
+         html = '<h1>Example - pricing and availability api demo for '+ show_name + '</h1>';
+            $('#heading').html(html);   
+        var from_Year = show_booking_period_from.slice(0,4);
+        var from_Month = show_booking_period_from.slice(5,7);
+        var from_Day = show_booking_period_from.slice(8,10);
+        var to_Year = show_booking_period_to.slice(0,4);
+        var to_Month = show_booking_period_to.slice(5,7);
+        var to_Day = show_booking_period_to.slice(8,10);
+        var from_date = new Date(from_Year, from_Month-1, from_Day);
+        var from_firstDay = new Date(from_date.getFullYear(), from_date.getMonth(), 1);
+        var from_lastDay = new Date(from_date.getFullYear(), from_date.getMonth() + 1, 0);
+        var to_date = new Date(to_Year,to_Month-1,to_Day);
+        var Month_diff = (to_date.getFullYear()-from_date.getFullYear())*12 + (to_date.getMonth() - from_date.getMonth()) ;
+        var arrDatesFrom = [];
+        var arrDatesTo=[];
+        for(i=0;i<Month_diff+1; i++ )
+        {
+            arrDatesFrom[0] = new Date(from_Year, from_Month-1, from_Day) ;
+            arrDatesFrom[i] = new Date(from_firstDay.getFullYear(), from_firstDay.getMonth()+ i , 1) ;
+            arrDatesTo[i] = new Date(from_firstDay.getFullYear(), from_lastDay.getMonth() + 1 + i, 0);
+            arrDatesTo[Month_diff] = new Date(to_Year,to_Month-1,to_Day);
+        }
+        var optionMonthName = [];
+        for(i=0;i<Month_diff+1; i++ )
+        {
+            optionMonthName.push(arrDatesFrom[i].toString().slice(4, 8));
+        }
+        var monthNumber = [];
+        for (var i=0; i<9;i++)
+        {
+            var temp= i+1;
+            monthNumber[i]= "0" + temp;
+        }
+        for  (var i=9; i<12;i++)
+        {
+            monthNumber[i]= i+1;
+        }
+        var dayNumber = new Array();
+        for(var i=0; i<10;i++)
+        {
+            dayNumber[i]= "0" +i
+        }
+        for(var i=10; i<32; i++)
+        {
+            dayNumber[i]=i;
+        }
+         html = '<select size=" '+ (Month_diff+1) +' " id="month">';
+            html += CreateList(Month_diff);
+            $('#List').html(html);   
+        function CreateList(to) {
+            var html;
+            for (var i = 0; i < to+1; i++) {
+                html += '<option value=" ' + arrDatesFrom[i].getFullYear() + '' + monthNumber[arrDatesFrom[i].getMonth()] + '' + dayNumber[arrDatesFrom[i].getDate()] + '_' + arrDatesTo[i].getFullYear() + '' + monthNumber[arrDatesTo[i].getMonth()] + '' + dayNumber[arrDatesTo[i].getDate()] + ' ">'+ optionMonthName[i] + arrDatesFrom[i].getFullYear() +'</option>';  
+            }
+            html += '</select>';
+            return html;
+        }
+</script>
+<script>
+        var pricing_service_link = 'https://pricing-service.tixuk.io/api/v2/pricing/days/products/'+ show +'/quantity/'+number_of_tickets+'/from/';
+        var inventory_service_link = 'https://inventory-service.tixuk.io/api/v3/availability/products/'+ show +'/quantity/'+number_of_tickets+'/from/';
+            $('#month').change(function(event) {
+            $('#container').empty();
+            $(document).ajaxStart($.blockUI).ajaxStop($.unblockUI);
+            var id = $(event.currentTarget).val();
+            var startDate = id.slice(1, 9);
+            var endDate = id.slice(10, 18);
+            var endDateDay = id.slice(16,18);
+            var array_days = [];
+            var array_offer = [];
+            var array_price = []
+            var year = [];
+            var month = [];
+            var day = [];
+            var time = [];
+            var date = [];
+            var array_lump = []; 
+            var response_len ;           
+            $.ajax({
+                url: pricing_service_link + startDate + '/to/' + endDate,
+                type: 'get',
+                headers: { 'affiliateId': 'londontheatredd' },
+                success: function (data) {
+                        response_len=data.response.length;
+                    for (var i = 0; i < response_len; i++) {
+                        array_days[i] = data.response[i].date;
+                        array_offer[i] = data.response[i].offer;
+                        array_price[i] = data.response[i].minPrice.value;
+                        year.push(array_days[i].slice(0, 4));
+                        month.push(array_days[i].slice(5, 7));
+                        day.push(array_days[i].slice(8, 10));
+                        time.push(array_days[i].slice(11, 16));
+                        date.push(year[i] + month[i] + day[i] + 't' + time[i]);
+                    }
+                }
+                , async: false
+            });
+
+            $.ajax({
+                url: inventory_service_link + startDate + '/to/' + endDate + '/detailed',
+                type: 'get',
+                headers: { 'affiliateId': 'londontheatredd' },
+                success: function (data) {
+                    for (var i = 0; i < response_len ; i++) {
+                        array_lump[i] = data.response.availability[i].largestLumpOfTickets;
+                    }
+                }
+                , async: false
+            });
+            var str_offer=array_offer.join();
+            var arrOffer=str_offer.split(',');
+            for(var i=0;i<arrOffer.length;i++)
+            {
+                if(arrOffer[i]=="true")
+                {
+                    arrOffer[i]="Offer";
+                }
+                else{
+                    arrOffer[i]="";
+                    }
+            }
+            var price_formated=[];
+            for(var i = 0; i < response_len; i++)
+            {
+                price_formated[i] = array_price[i].toString().slice(0,2) + '.' + array_price[i].toString().slice(2,4)
+            }
+            var dateObject = [];
+            var day1 = [];
+            for (var i = 0; i < response_len; i++) {
+                day1[i] = Number(day[i]);
+            }
+            var response_date = [];
+            var day_of_the_week = [];
+            for(var i=0; i<response_len;i++)
+            { 
+            response_date[i] = new Date(year[i],month[i]-1,day[i]).toString();
+            day_of_the_week[i] = response_date[i].slice(0, 3);
+            }
+            function daysInMonth(month, year) {
+            return new Date(year, month, 0).getDate();
+            }
+            var response_date_all = [];
+            var day_of_the_week_all = [] ;
+            for(var i=1; i<daysInMonth(year[0],month[0]-1)+1;i++)
+            {
+             response_date_all[i] = new Date(year[0],month[0]-1,i).toString();
+             day_of_the_week_all[i] = response_date_all[i].slice(0, 3);
+            } 
+            for (var i = 0; i < response_len; i++) {
+                if (day1[i] == day1[i + 1]) {
+                    dateObject[day1[i]] = { Day: day1[i], Day_Week: day_of_the_week[i] , Time: time[i] + " " + time[i + 1], Price: price_formated[i], Lump: array_lump[i], Offer: arrOffer[i]};
+                }
+                else if (day1[i] != day1[i - 1]) {
+                    dateObject[day1[i]] = { Day: day1[i], Day_Week: day_of_the_week[i] , Time: time[i], Price: price_formated[i], Lump: array_lump[i], Offer: arrOffer[i]}
+                }
+            }
+            var shift = {"Mon" : 0, "Tue":1, "Wed":2, "Thu" : 3, "Fri": 4, "Sat" : 5, "Sun" :6};
+            html = '<table width="50%" border="1"><tbody>'
+            html += CreateShiftAndCalendar(dateObject, 1, 8-shift[day_of_the_week_all[1]]);
+            html += CreateCalendar(dateObject, 8-shift[day_of_the_week_all[1]], 15-shift[day_of_the_week_all[1]]);
+            html += CreateCalendar(dateObject, 15-shift[day_of_the_week_all[1]], 22-shift[day_of_the_week_all[1]]);
+            html += CreateCalendar(dateObject, 22-shift[day_of_the_week_all[1]], 29-shift[day_of_the_week_all[1]]);
+            if (shift[day_of_the_week_all[1]]==6)
+            {
+                html += CreateCalendar(dateObject, 29-shift[day_of_the_week_all[1]], 30);
+                html += CreateCalendar(dateObject, 30, Number(endDateDay)+1);
+            }
+            else{
+                html += CreateCalendar(dateObject, 29-shift[day_of_the_week_all[1]], Number(endDateDay)+1);
+            }
+            $('#container').html(html);
+            $('#container').unblock(); 
+            function CreateShiftAndCalendar(dateObj, from, to)
+            {
+                var html = '<tr>';;
+               for (var i = 0; i < shift[day_of_the_week_all[1]]; i++) {
+                    html += '<td width="10%"><br><br><br></td>';
+                }
+                for (var i = from; i < to; i++) {    
+                     if (dateObj[i] === undefined) {
+                    html += '<td width="10%">' + i +  "<br>" +day_of_the_week_all[i]   + '<br><br><br></td>';
+                }
+                else {
+                    html += '<td width="10%">' + dateObj[i].Day
+                        + "<br>" + dateObj[i].Day_Week
+                        + "<br> Time: " + dateObj[i].Time
+                        + "<br>From: " + '&#163;' + dateObj[i].Price
+                        + "<br>Largest Lump: " + dateObj[i].Lump
+                        + "<br>" + dateObj[i].Offer;
+                }
+                }
+            return html;           
+            }
+            function CreateCalendar(dateObj, from, to) {
+            var html = '<tr>';
+            for (var i = from; i < to; i++) {
+                if (dateObj[i] === undefined) {
+                    html += '<td width="10%">' + i +  "<br>" +day_of_the_week_all[i]   + '<br><br><br></td>';
+                }
+                else {
+                    html += '<td width="10%">' + dateObj[i].Day
+                        + "<br>" + dateObj[i].Day_Week
+                        + "<br> Time: " + dateObj[i].Time
+                        + "<br>From: " + '&#163;' + dateObj[i].Price
+                        + "<br>Largest Lump: " + dateObj[i].Lump
+                        + "<br>" + dateObj[i].Offer
+                        + '</td>';
+                }
+            }
+            html += '</tr>';
+            return html;
+        }
+        })
+    </script>
+</body>
+</html>
